@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 import matplotlib.animation as animation
 
@@ -19,10 +20,22 @@ class particle:
 
 class animation:
 	'''The animation'''
-	def __init__(self):
-		fig, ax = plt.subplots()
-		molecule = particle(0.7,0.3,0,0)
-		particle.draw(molecule, ax)
-		fig.savefig('animation.png')
+	def __init__(self, n):
+		self.number = n
+	
+	def drawParticles(self, ax):
+		molecules = np.ndarray((self.number,),dtype=object)
+		dx = 0
+		dy = 0
+		for i in range(self.number):
+			x = random.random()
+			y = random.random()
+			molecules[i]=particle(x,y,dx,dy)
+		for molecule in molecules:
+			particle.draw(molecule, ax)
 
-ani = animation()
+
+fig, ax = plt.subplots()
+ani = animation(30)
+ani.drawParticles(ax)
+fig.savefig('animation.png')
