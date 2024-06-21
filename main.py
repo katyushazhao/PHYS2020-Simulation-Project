@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import random
-import imageio.v2 as imageio
+import imageio
 
 class Particle:
     '''A particle is a circle with position, velocity and radius.'''
@@ -29,16 +29,16 @@ class Particle:
         '''Bounce off the walls of the unit square'''
         if self.x - self.radius < 0:
             self.x = self.radius
-            self.dx = -self.dx
+            self.dx = -self.dx  # Reverse x-direction velocity
         if self.x + self.radius > 1:
             self.x = 1 - self.radius
-            self.dx = -self.dx
+            self.dx = -self.dx  # Reverse x-direction velocity
         if self.y - self.radius < 0:
             self.y = self.radius
-            self.dy = -self.dy
+            self.dy = -self.dy  # Reverse y-direction velocity
         if self.y + self.radius > 1:
             self.y = 1 - self.radius
-            self.dy = -self.dy
+            self.dy = -self.dy  # Reverse y-direction velocity
 
     def bounce(self, other):
         '''Elastic collision between this particle and another'''
@@ -82,17 +82,24 @@ class Frame:
         self.num_particles = num_particles
         self.particles = []
 
-        # Add a large particle (centered at 0.5, 0.5) with zero velocity (Brownian motion)
-        center_particle = Particle(x=0.5, y=0.5, dx=0.0, dy=0.0, r=0.05, color='blue')
+        # Add a large particle (centered at 0.5, 0.5) with zero velocity and more mass
+        center_particle = Particle(x=0.5, y=0.5, dx=0.0, dy=0.0, r=0.05, m=10, color='blue')
         self.particles.append(center_particle)
 
-        # Add other particles with random initial conditions
+        # Add other particles with random initial conditions, ensuring no overlap with central particle
         for _ in range(self.num_particles - 1):
-            x = random.random() * 0.98 + 0.01
-            y = random.random() * 0.98 + 0.01
-            dx = (random.random() - 0.5) * 0.02
-            dy = (random.random() - 0.5) * 0.02
-            particle = Particle(x, y, dx, dy)
+            # Initialize positions randomly until a suitable position is found
+            while True:
+                x = random.random() * 0.98 + 0.01
+                y = random.random() * 0.98 + 0.01
+                dx = (random.random() - 0.5) * 0.02
+                dy = (random.random() - 0.5) * 0.02
+                particle = Particle(x, y, dx, dy)
+                
+                # Check if the new particle overlaps with the central particle
+                if not particle.collision(center_particle):
+                    break  # No collision, accept this position
+                
             self.particles.append(particle)
 
     def draw_particles(self, ax):
@@ -106,8 +113,13 @@ class Frame:
             for other in self.particles:
                 if particle != other and particle.collision(other):
                     particle.bounce(other)
+            
+            # Update particle positions
             particle.x += particle.dx
             particle.y += particle.dy
+
+            # Ensure particles stay within bounds
+            particle.boundary()
 
         # Draw updated particles on the graph
         self.draw_particles(ax)
@@ -118,14 +130,14 @@ def create_gif(path, frames):
     for i in range(frames):
         filename = os.path.join(path, f"{i}.png")
         images.append(imageio.imread(filename))
-    imageio.mimsave("animation.gif", images, fps=10, loop=0)
+    imageio.mimsave("animation.gif", images, fps=30, loop=0)
 
 # Simulation parameters
-runs = 50
+runs = 120
 
 # Initialize the first frame
 fig, ax = plt.subplots()
-animation_frame = Frame(num_particles=100)
+animation_frame = Frame(num_particles=300)
 animation_frame.draw_particles(ax)
 fig.savefig('0.png')
 plt.close(fig)
