@@ -38,7 +38,7 @@ class particle:
 		if self.y - self.radius <0:
 			self.y = self.radius
 			self.dy = -self.dy
-		if self.y - self.radius >1:
+		if self.y + self.radius >1:
 			self.y = 1-self.radius
 			self.dy = -self.dy
 
@@ -50,6 +50,17 @@ class particle:
 		posself = (self.x,self.y)
 		posother = (molecule.x,molecule.y)
 		(self.dx,self.dy) = np.subtract(vself, ((2*molecule.mass)/(self.mass+molecule.mass))*(np.dot(np.subtract(vself,vother),np.subtract(posself,posother))/(dist**2))*np.subtract(posself,posother))
+		'''Calulate Unit normal Vector'''
+		normal_vector = np.subtract(posself,posother)/dist
+		'''Update positions to avoid overlap'''
+		overlap=(self.radius+molecule.radius-dist)/2
+		self.x += overlap*normal_vector[0]
+		self.y += overlap*normal_vector[1]
+		molecule.x -= overlap*normal_vector[0]
+		molecule.y -= overlap*normal_vector[1]
+		'''Ensure molecules dont leave the boundary'''
+		self.boundary()
+		molecule.boundary()
 
 class frame:
 	'''The animation'''
@@ -90,7 +101,7 @@ def create_gif(path, frames):
 	for i in range(frames):
 		filename = os.path.join(path,f"{i}.png")
 		images.append(imageio.imread(filename))
-	imageio.mimsave("animation.gif", images, duration=frames/5)
+	imageio.mimsave("animation.gif", images, fps=10, loop=0)
 
 runs = 50
 fig, ax = plt.subplots()
